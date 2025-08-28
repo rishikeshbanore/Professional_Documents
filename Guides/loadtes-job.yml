@@ -1,0 +1,77 @@
+parameters:
+  - name: stageName
+    type: string
+  - name: configFile
+    type: string
+  - name: artifactName
+    type: string
+  - name: clientSecret
+    type: string
+  - name: clientId
+    type: string
+  - name: serverName
+    type: string
+  - name: intPath
+    type: string
+  - name: extPath
+    type: string
+  - name: stageScope
+    type: string
+  - name: threadForInternal
+    type: string
+  - name: loopsForInternal
+    type: string
+  - name: threadForExternal
+    type: string
+  - name: loopsForExternal
+    type: string
+  - name: serviceConnection
+    type: string
+  - name: loadTestResource
+    type: string
+  - name: loadTestResourceGroup
+    type: string
+
+jobs:
+- job: LoadTest
+  displayName: ${{ parameters.stageName }} Stage Load Test
+  steps:
+  - task: PowerShell@2
+    displayName: 'Substitute variables in properties file'
+    env:
+      CLIENT_SECRET: ${{ parameters.clientSecret }}
+      CLIENT_ID: ${{ parameters.clientId }}
+      SERVER_NAME: ${{ parameters.serverName }}
+      INT_PATH: ${{ parameters.intPath }}
+      EXT_PATH: ${{ parameters.extPath }}
+      STAGE_SCOPE: ${{ parameters.stageScope }}
+      INT_THREAD: ${{ parameters.threadForInternal }}
+      INT_LOOP: ${{ parameters.loopsForInternal }}
+      EXT_THREAD: ${{ parameters.threadForExternal }}
+      EXT_LOOP: ${{ parameters.loopsForExternal }}
+    inputs:
+      targetType: 'inline'
+      script: |
+        Write-Host "Substituting variables in properties file..."
+        $content = Get-Content userproperties.properties -Raw
+        $content = $content -replace '\$\{clientSecret\}', $env:CLIENT_SECRET
+        $content = $content -replace '\$\{clientId\}', $env:CLIENT_ID
+        $content = $content -replace '\$\{serverName\}', $env:SERVER_NAME
+        $content = $content -replace '\$\{intPath\}', $env:INT_PATH
+        $content = $content -replace '\$\{extPath\}', $env:EXT_PATH
+        $content = $content -replace '\${stageScope\}', $env:STAGE_SCOPE
+        $content = $content -replace '\$\{ThreadForInternal\}', $env:INT_THREAD
+        $content = $content -replace '\$\{LoopsForInternal\}', $env:INT_LOOP
+        $content = $content -replace '\$\{ThreadForExternal\}', $env:EXT_THREAD
+        $content = $content -replace '\${LoopsForExternal\}', $env:EXT_LOOP
+        Set-Content userproperties.properties $content
+
+  - task: AzureLoadTest@1
+    inputs:
+      azureSubscription: ${{ parameters.serviceConnection }}
+      loadTestConfigFile: ${{ parameters.configFile }}
+      resourceGroup: ${{ parameters.loadTestResourceGroup }}
+      loadTestResource: ${{ parameters.loadTestResource }}
+
+  - publish: $(System.DefaultWorkingDirectory)/loadTest
+    artifact: ${{ parameters.artifactName }}

@@ -1,0 +1,95 @@
+trigger:
+- none
+
+pool:
+  name: TestCenter
+
+variables:
+  serviceConnection: sharedservices.integrationtests.deployment
+  loadTestResource: fms-temp-test-loadttest
+  loadTestResourceGroup: sharedsvc-fms-test
+
+parameters:
+  - name: ThreadForInternal
+    type: string
+    default: '2'   
+  - name: LoopsForInternal
+    type: string
+    default: '2' 
+  - name: ThreadForExternal
+    type: string
+    default: '2'   
+  - name: LoopsForExternal
+    type: string
+    default: '2' 
+
+stages:
+- stage: DEV
+  variables:
+    - group: FMS.DEV
+  jobs:
+  - template: templates/loadtest-job.yml
+    parameters:
+      stageName: DEV
+      configFile: configs/DevConfig.yaml
+      artifactName: results_dev
+      clientSecret: $(ClientSecret)
+      clientId: $(clientId)
+      serverName: $(serverName)
+      intPath: $(intPath)
+      extPath: $(extPath)
+      stageScope: $(stageScope)
+      threadForInternal: ${{ parameters.ThreadForInternal }}
+      loopsForInternal: ${{ parameters.LoopsForInternal }}
+      threadForExternal: ${{ parameters.ThreadForExternal }}
+      loopsForExternal: ${{ parameters.LoopsForExternal }}
+      serviceConnection: $(serviceConnection)
+      loadTestResource: $(loadTestResource)
+      loadTestResourceGroup: $(loadTestResourceGroup)
+
+- stage: TEST
+  variables:
+    - group: FMS.TEST
+  jobs:
+  - template: templates/loadtest-job.yml
+    parameters:
+      stageName: TEST
+      configFile: configs/TestConfig.yaml
+      artifactName: results_test
+      clientSecret: $(ClientSecret)
+      clientId: $(clientId)
+      serverName: $(serverName)
+      intPath: $(intPath)
+      extPath: $(extPath)
+      stageScope: $(stageScope)
+      threadForInternal: ${{ parameters.ThreadForInternal }}
+      loopsForInternal: ${{ parameters.LoopsForInternal }}
+      threadForExternal: ${{ parameters.ThreadForExternal }}
+      loopsForExternal: ${{ parameters.LoopsForExternal }}
+      serviceConnection: $(serviceConnection)
+      loadTestResource: $(loadTestResource)
+      loadTestResourceGroup: $(loadTestResourceGroup)
+
+- stage: ABN
+  variables:
+    - group: FMS.ABN
+  jobs:
+  - template: templates/loadtest-job.yml
+    parameters:
+      stageName: ABN
+      configFile: configs/AbnConfig.yaml
+      artifactName: results_abn
+      clientSecret: $(ClientSecret)
+      clientId: $(clientId)
+      serverName: $(serverName)
+      intPath: $(intPath)
+      extPath: $(extPath)
+      stageScope: $(stageScope)
+      threadForInternal: ${{ parameters.ThreadForInternal }}
+      loopsForInternal: ${{ parameters.LoopsForInternal }}
+      threadForExternal: ${{ parameters.ThreadForExternal }}
+      loopsForExternal: ${{ parameters.LoopsForExternal }}
+      serviceConnection: $(serviceConnection)
+      loadTestResource: $(loadTestResource)
+      loadTestResourceGroup: $(loadTestResourceGroup)
+
